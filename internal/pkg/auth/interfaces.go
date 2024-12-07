@@ -14,5 +14,4 @@ type Usecase interface {
 type Repository interface {
 	CheckToken(ctx context.Context, userID uuid.UUID, refreshToken string) error
 	CreateSession(ctx context.Context, session *models.Session) error
-	DeleteSession(ctx context.Context, session *models.Session) error
 }

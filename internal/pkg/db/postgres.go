@@ -29,7 +29,7 @@ type PostgresParams struct {
 
 func NewPostgresPool(p PostgresParams) (*pgxpool.Pool, error) {
 	connStr := getConnStr(&p.Cfg)
-
+	p.Logger.Debug(connStr)
 	config, err := pgxpool.ParseConfig(connStr)
 	if err != nil {
 		p.Logger.Error("parse config: " + err.Error())

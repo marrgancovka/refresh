@@ -22,7 +22,7 @@ type Params struct {
 var migrationFiles embed.FS
 
 func RunMigrations(p Params) error {
-	sourceDriver, err := iofs.New(migrationFiles, "schema")
+	sourceDriver, err := iofs.New(migrationFiles, "postgres")
 	if err != nil {
 		return fmt.Errorf("failed to initialize migrations source driver: %w", err)
 	}

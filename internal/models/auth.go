@@ -6,8 +6,10 @@ import (
 )
 
 type PairToken struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
+	AccessToken     string    `json:"access_token"`
+	RefreshToken    string    `json:"refresh_token"`
+	ExpAccessToken  time.Time `json:"-"`
+	ExpRefreshToken time.Time `json:"-"`
 }
 
 type TokenPayload struct {

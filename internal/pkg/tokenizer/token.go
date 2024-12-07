@@ -34,17 +34,28 @@ func (t *Tokenizer) GenerateJWT(payload *models.TokenPayload) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
 		"sub": payload.UserID,
 		"ip":  payload.UserIP,
-		"exp": payload.Exp,
+		"exp": payload.Exp.Unix(),
 	})
 
 	return token.SignedString(t.cfg.KeyJWT)
 }
 
 func (t *Tokenizer) ValidateJWT(tokenString string) (*models.TokenPayload, error) {
+	t.log.Debug(tokenString)
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, myerrors.ErrInvalidToken
 		}
+
+		//if exp, ok := token.Claims.(jwt.MapClaims)["exp"]; ok {
+		//	t.log.Debug("exp, ok: ", "exp", exp, "ok", ok)
+		//	//expTime := time.Unix(exp, 0)
+		//	//t.log.Debug("", "exp", expTime)
+		//	if exp.(time.Time).Before(time.Now()) {
+		//		return nil, myerrors.ErrTokenExpired
+		//	}
+		//}
+
 		return t.cfg.KeyJWT, nil
 	})
 	if err != nil {
@@ -67,19 +78,26 @@ func (t *Tokenizer) ValidateJWT(tokenString string) (*models.TokenPayload, error
 }
 
 func (t *Tokenizer) GeneratePairToken(payload *models.TokenPayload) (*models.PairToken, error) {
+	pair := &models.PairToken{}
 	payload.Exp = time.Now().Add(t.cfg.AccessExpirationTime)
+	pair.ExpAccessToken = payload.Exp
 	accessToken, err := t.GenerateJWT(payload)
 	if err != nil {
+		t.log.Error("generating access token", "error", err)
 		return nil, err
 	}
+	pair.AccessToken = accessToken
 
 	payload.Exp = time.Now().Add(t.cfg.RefreshExpirationTime)
+	pair.ExpRefreshToken = payload.Exp
 	refreshToken, err := t.GenerateJWT(payload)
 	if err != nil {
+		t.log.Error("generating refresh token", "error", err)
 		return nil, err
 	}
+	pair.RefreshToken = refreshToken
 
-	return &models.PairToken{AccessToken: accessToken, RefreshToken: refreshToken}, nil
+	return pair, nil
 }
 
 func parseClaims(token *jwt.Token) (*models.TokenPayload, error) {
@@ -88,8 +106,8 @@ func parseClaims(token *jwt.Token) (*models.TokenPayload, error) {
 		return nil, myerrors.ErrInvalidToken
 	}
 
-	userID, ok := claims["sub"].(uuid.UUID)
-	if !ok {
+	userID, err := uuid.Parse(claims["sub"].(string))
+	if err != nil {
 		return nil, errors.New("invalid userID in token claims")
 	}
 
@@ -98,14 +116,15 @@ func parseClaims(token *jwt.Token) (*models.TokenPayload, error) {
 		return nil, errors.New("invalid IP in token claims")
 	}
 
-	exp, ok := claims["exp"].(time.Time)
+	exp, ok := claims["exp"].(float64)
 	if !ok {
 		return nil, errors.New("invalid exp in token claims")
 	}
+	expTime := time.Unix(int64(exp), 0)
 
 	return &models.TokenPayload{
 		UserID: userID,
 		UserIP: ip,
-		Exp:    exp,
+		Exp:    expTime,
 	}, nil
 }

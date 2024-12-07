@@ -28,8 +28,8 @@ func NewRouter(p RouterParams) *Router {
 
 	auth := v1.PathPrefix("/auth").Subrouter()
 
-	auth.HandleFunc("/login", p.Handler.Authenticate).Methods(http.MethodPost)
-	auth.HandleFunc("/refresh", p.Handler.Refresh).Methods(http.MethodDelete)
+	auth.HandleFunc("/login", p.Handler.Authenticate).Methods(http.MethodGet)
+	auth.HandleFunc("/refresh", p.Handler.Refresh).Methods(http.MethodGet)
 
 	router := &Router{
 		handler: api,

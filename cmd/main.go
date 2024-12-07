@@ -33,9 +33,9 @@ func main() {
 
 			tokenizer.New,
 
-			handlerAuth.New,
-			fx.Annotate(usecase.New, fx.As(new(auth.Usecase))),
 			fx.Annotate(repo.New, fx.As(new(auth.Repository))),
+			fx.Annotate(usecase.New, fx.As(new(auth.Usecase))),
+			handlerAuth.New,
 		),
 
 		fx.WithLogger(func(logger *slog.Logger) fxevent.Logger {

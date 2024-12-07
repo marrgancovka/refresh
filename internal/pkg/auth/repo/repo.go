@@ -34,7 +34,7 @@ func New(p Params) *Repo {
 
 func (r *Repo) CheckToken(ctx context.Context, userID uuid.UUID, refreshToken string) error {
 	var hashToken string
-	query := `SELECT hash_token FROM session WHERE user_id = $1`
+	query := `SELECT hash_token FROM sessions WHERE user_id = $1`
 	if err := r.db.QueryRow(ctx, query, userID).Scan(&hashToken); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return myerrors.ErrInappropriateRefreshToken
@@ -51,14 +51,7 @@ func (r *Repo) CheckToken(ctx context.Context, userID uuid.UUID, refreshToken st
 
 func (r *Repo) CreateSession(ctx context.Context, session *models.Session) error {
 	query := `INSERT INTO sessions (hash_token, user_id) VALUES ($1, $2) ON CONFLICT (user_id) DO UPDATE SET hash_token = EXCLUDED.hash_token`
-	if _, err := r.db.Exec(ctx, query, session.HashToken); err != nil {
-		return err
-	}
-	return nil
-}
-func (r *Repo) DeleteSession(ctx context.Context, session *models.Session) error {
-	query := `DELETE FROM sessions WHERE hash_token = $1`
-	if _, err := r.db.Exec(ctx, query, session.HashToken); err != nil {
+	if _, err := r.db.Exec(ctx, query, session.HashToken, session.UserID); err != nil {
 		return err
 	}
 	return nil
