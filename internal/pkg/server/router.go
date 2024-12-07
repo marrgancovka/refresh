@@ -2,7 +2,6 @@ package server
 
 import (
 	"github.com/gorilla/mux"
-	httpSwagger "github.com/swaggo/http-swagger"
 	"go.uber.org/fx"
 	"log/slog"
 	"net/http"
@@ -24,7 +23,6 @@ func NewRouter(p RouterParams) *Router {
 	api := mux.NewRouter().PathPrefix("/api").Subrouter()
 
 	v1 := api.PathPrefix("/v1").Subrouter()
-	v1.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
 	auth := v1.PathPrefix("/auth").Subrouter()
 

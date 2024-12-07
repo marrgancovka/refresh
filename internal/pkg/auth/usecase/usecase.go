@@ -3,8 +3,10 @@ package usecase
 import (
 	"context"
 	"crypto/sha256"
+	"fmt"
 	"go.uber.org/fx"
 	"golang.org/x/crypto/bcrypt"
+	"gopkg.in/gomail.v2"
 	"log/slog"
 	"refresh/internal/models"
 	"refresh/internal/pkg/auth"
@@ -69,7 +71,7 @@ func (uc *Usecase) Refresh(ctx context.Context, refreshToken string, ip string) 
 	if payload.UserIP != ip {
 		uc.log.Info("IP address did not match")
 		payload.UserIP = ip
-		// warning to email
+		uc.sendEmail()
 	}
 
 	pair, err := uc.t.GeneratePairToken(payload)
@@ -98,4 +100,15 @@ func hashToken(token string) string {
 	hashedToken, _ := bcrypt.GenerateFromPassword(hashed[:], bcrypt.DefaultCost)
 
 	return string(hashedToken)
+}
+
+func (uc *Usecase) sendEmail() {
+	email := gomail.NewMessage()
+	email.SetHeader("From", "example@example.com")
+	email.SetHeader("To", "example_user@example.com")
+	email.SetHeader("Subject", "Предупреждение!")
+	email.SetBody("text/html", fmt.Sprintf("Ваш ip адресс сменился"))
+	d := gomail.NewDialer("smtp", 465, "example@example.com", "password")
+	_ = d.DialAndSend(email)
+	uc.log.Info("email sent")
 }
