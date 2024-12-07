@@ -1,0 +1,10 @@
+httpServer:
+  address: "0.0.0.0:8080"
+  timeout: 4s
+  idleTimeout: 30s
+  readHeaderTimeout: 10s
+db:
+  connectTimeout: 5m
+token:
+  accessExpirationTime: 5m
+  refreshExpirationTime: 24h

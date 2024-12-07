@@ -1,0 +1,6 @@
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+CREATE TABLE IF NOT EXISTS sessions (
+    hash_token TEXT PRIMARY KEY,
+    user_id UUID UNIQUE NOT NULL
+);
