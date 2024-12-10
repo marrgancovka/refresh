@@ -1,8 +1,10 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/fx"
 	"log/slog"
 )
@@ -23,6 +25,33 @@ type PostgresParams struct {
 
 	Cfg    Config
 	Logger *slog.Logger
+}
+
+func NewPostgresPool(p PostgresParams) (*pgxpool.Pool, error) {
+	connStr := getConnStr(&p.Cfg)
+	p.Logger.Debug(connStr)
+	config, err := pgxpool.ParseConfig(connStr)
+	if err != nil {
+		p.Logger.Error("parse config: " + err.Error())
+		return nil, fmt.Errorf("unable to parse config: %w", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), p.Cfg.ConnectTimeout)
+	defer cancel()
+
+	pool, err := pgxpool.NewWithConfig(ctx, config)
+	if err != nil {
+		p.Logger.Error("create pool: " + err.Error())
+		return nil, fmt.Errorf("unable to connect to database: %w", err)
+	}
+
+	err = pool.Ping(ctx)
+	if err != nil {
+		p.Logger.Error("ping database: " + err.Error())
+		return nil, fmt.Errorf("unable to connect to database: %w", err)
+	}
+
+	return pool, nil
 }
 
 func NewPostgresConn(p PostgresParams) (*sql.DB, error) {

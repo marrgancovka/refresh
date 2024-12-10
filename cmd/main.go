@@ -29,7 +29,7 @@ func main() {
 			config.MustLoad,
 
 			db.NewPostgresConn,
-			//db.NewPostgresPool,
+			db.NewPostgresPool,
 
 			tokenizer.New,
 

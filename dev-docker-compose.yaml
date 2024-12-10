@@ -10,25 +10,11 @@ services:
     env_file:
       - ./.env
     ports:
-      - ${DB_PORT}:5432
+      - ${POSTGRES_PORT}:5432
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASS}
       POSTGRES_DB: ${DB_NAME}
-
-  main:
-    depends_on:
-      - db
-    container_name: mainService
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - '8080:8080'
-    env_file:
-      - ./.env
-
-
 
 volumes:
   postgresdb-data:

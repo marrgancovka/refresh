@@ -2,10 +2,10 @@ package repo
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/fx"
 	"golang.org/x/crypto/bcrypt"
 	"log/slog"
@@ -21,12 +21,12 @@ const (
 type Params struct {
 	fx.In
 
-	DB     *sql.DB
+	DB     *pgxpool.Pool
 	Logger *slog.Logger
 }
 
 type Repo struct {
-	db  *sql.DB
+	db  *pgxpool.Pool
 	log *slog.Logger
 }
 
@@ -40,7 +40,7 @@ func New(p Params) *Repo {
 func (r *Repo) CheckToken(ctx context.Context, userID uuid.UUID, refreshToken string) error {
 	var hashToken string
 
-	row := r.db.QueryRowContext(ctx, checkToken, userID)
+	row := r.db.QueryRow(ctx, checkToken, userID)
 	if err := row.Scan(&hashToken); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return myerrors.ErrInappropriateRefreshToken
@@ -56,7 +56,7 @@ func (r *Repo) CheckToken(ctx context.Context, userID uuid.UUID, refreshToken st
 }
 
 func (r *Repo) CreateSession(ctx context.Context, session *models.Session) error {
-	if _, err := r.db.ExecContext(ctx, insertSession, session.HashToken, session.UserID); err != nil {
+	if _, err := r.db.Exec(ctx, insertSession, session.HashToken, session.UserID); err != nil {
 		return err
 	}
 	return nil
