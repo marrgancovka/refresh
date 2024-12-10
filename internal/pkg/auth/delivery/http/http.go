@@ -70,8 +70,9 @@ func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
 	if err != nil || cookie == nil {
 		h.log.Error("invalid cookie", "error", err)
 		responser.Send401(w, "refresh token not found")
+		return
 	}
-	refresh := cookie.Value
+	var refresh = cookie.Value
 	clientIP := r.RemoteAddr
 
 	tokens, err := h.uc.Refresh(r.Context(), refresh, clientIP)

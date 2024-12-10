@@ -47,15 +47,6 @@ func (t *Tokenizer) ValidateJWT(tokenString string) (*models.TokenPayload, error
 			return nil, myerrors.ErrInvalidToken
 		}
 
-		//if exp, ok := token.Claims.(jwt.MapClaims)["exp"]; ok {
-		//	t.log.Debug("exp, ok: ", "exp", exp, "ok", ok)
-		//	//expTime := time.Unix(exp, 0)
-		//	//t.log.Debug("", "exp", expTime)
-		//	if exp.(time.Time).Before(time.Now()) {
-		//		return nil, myerrors.ErrTokenExpired
-		//	}
-		//}
-
 		return t.cfg.KeyJWT, nil
 	})
 	if err != nil {

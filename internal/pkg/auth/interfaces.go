@@ -6,6 +6,8 @@ import (
 	"refresh/internal/models"
 )
 
+//go:generate mockgen -source=interfaces.go -destination=mocks/mock.go
+
 type Usecase interface {
 	Authenticate(ctx context.Context, payload *models.TokenPayload) (*models.PairToken, error)
 	Refresh(ctx context.Context, refreshToken string, ip string) (*models.PairToken, error)

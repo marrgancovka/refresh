@@ -2,10 +2,10 @@ package repo
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/fx"
 	"golang.org/x/crypto/bcrypt"
 	"log/slog"
@@ -13,15 +13,20 @@ import (
 	"refresh/pkg/myerrors"
 )
 
+const (
+	checkToken    = `SELECT hash_token FROM sessions WHERE user_id = $1`
+	insertSession = `INSERT INTO sessions (hash_token, user_id) VALUES ($1, $2) ON CONFLICT (user_id) DO UPDATE SET hash_token = EXCLUDED.hash_token`
+)
+
 type Params struct {
 	fx.In
 
-	DB     *pgxpool.Pool
+	DB     *sql.DB
 	Logger *slog.Logger
 }
 
 type Repo struct {
-	db  *pgxpool.Pool
+	db  *sql.DB
 	log *slog.Logger
 }
 
@@ -34,8 +39,9 @@ func New(p Params) *Repo {
 
 func (r *Repo) CheckToken(ctx context.Context, userID uuid.UUID, refreshToken string) error {
 	var hashToken string
-	query := `SELECT hash_token FROM sessions WHERE user_id = $1`
-	if err := r.db.QueryRow(ctx, query, userID).Scan(&hashToken); err != nil {
+
+	row := r.db.QueryRowContext(ctx, checkToken, userID)
+	if err := row.Scan(&hashToken); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return myerrors.ErrInappropriateRefreshToken
 		}
@@ -50,8 +56,7 @@ func (r *Repo) CheckToken(ctx context.Context, userID uuid.UUID, refreshToken st
 }
 
 func (r *Repo) CreateSession(ctx context.Context, session *models.Session) error {
-	query := `INSERT INTO sessions (hash_token, user_id) VALUES ($1, $2) ON CONFLICT (user_id) DO UPDATE SET hash_token = EXCLUDED.hash_token`
-	if _, err := r.db.Exec(ctx, query, session.HashToken, session.UserID); err != nil {
+	if _, err := r.db.ExecContext(ctx, insertSession, session.HashToken, session.UserID); err != nil {
 		return err
 	}
 	return nil
